@@ -57,6 +57,9 @@ class extract:
 
     def get_q(self, text):
 
+        # preprocessing: remove comma from text
+        text = text.replace(",", " ")
+
         text = text[text.find("一、")+2:]
         
         #for j in range(10):
@@ -71,7 +74,7 @@ class extract:
                     break
             i -= 3 # remove (25分)
 
-            que = self.text_remove_esc(text[:i])
+            que = self.text_clean(self.text_remove_esc(text[:i]))
             print("current:", que)
             self.quetions.append(que)
 
@@ -79,16 +82,19 @@ class extract:
 
             ans_begin = text.find("答：") + 2
 
+            text = text[ans_begin:]
             
             try:
                 ans_end = text.find(trans[count+1]) - 1
+                if ans_end == -2: # ans_end == -1
+                    ans_end = text.find(trans[count+1][0]  + "\n" + trans[count+1][1]) - 2 
             except:
                 return
 
-            ans = text[ans_begin:ans_end]
+            ans = self.text_clean(text[:ans_end])
             print("ans: " + ans)
             self.answers.append(ans.replace("\n", ""))
-            text = text[ans_end+2:]
+            text = text[ans_end+3:]
             
             count += 1
 
@@ -109,6 +115,16 @@ class extract:
 
         for k, v in d.items():
             text = text.replace(k, v)
+
+        return text
+
+    def text_clean(self, text):
+        remove_word = ["【版權所有，重製必究！】", '地方特考高分詳解', '高點', '高上公職', '--', '高上', '‧',
+                        '   ', '考點命中', '《透明的刑法總則編 》', '高點文化出版', '高點文化出版', '【版權所有，重製必',
+                        '02-23318268']
+
+        for word in remove_word:
+            text = text.replace(word, "")
 
         return text
 
