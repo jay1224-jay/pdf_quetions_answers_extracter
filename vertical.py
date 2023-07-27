@@ -49,8 +49,6 @@ class extract:
             # print(self.all_text)
 
             self.exam_year = filename[:-4].split('_')[-1]
-            
-            self.all_text = self.text_clean(self.all_text)
 
             self.get_q(self.all_text)
 
@@ -98,7 +96,7 @@ class extract:
                         break
                 i -= 4 # remove (25分)
 
-                que = text[:i].replace("\n", "")
+                que = self.text_clean(text[:i].replace("\n", ""))
                 # print("current:", que)
                 self.quetions.append(que)
 
@@ -118,7 +116,7 @@ class extract:
                 except:
                     return
 
-                ans = text[:ans_end].replace("\n", "")
+                ans = self.text_clean(text[:ans_end].replace("\n", ""))
                 # print("ans: " + ans)
                 self.answers.append(ans)
                 text = text[ans_end+3:]
@@ -183,16 +181,17 @@ class extract:
     def text_clean(self, text):
         target = "高點‧高上高普特考 goldensun.get. com.tw 台北市開封街一段 2號 8 樓  02-23318268  【中壢】 中壢市中山路100號14樓‧03-4256899       【台中】 台中市東區復興路四段231-3號 1樓‧04-22298699【台南】台南市中西區中山路147號 3樓之1‧06-2235868 【高雄】高雄市新興區中山一路308 號8樓‧07-2358996【另有板橋‧淡水‧三峽‧林口‧羅東‧逢甲‧東海‧中技‧彰化‧嘉義】"
         remove_word = [
+                '高上高普特考 www.get.com.tw/goldensun 台北市開封街一段 2 號 8 樓02-23318268【中壢】中壢市中山路 100 號 14 樓 03-4256899【台中】台中市東區復興路四段 231-3 號 1 樓‧04-22298699【台南】台南市中西區中山路 147 號 3 樓之 1‧06-2235868 【高雄】高雄市新興區中山一路 308 號 8 樓‧07-2358996【另有淡水‧三峽‧林口‧羅東‧中壢‧逢甲‧東海‧中技】',
                 '高點律師司法官班', 'http://www.license.com.tw', '(代表號)',
                 target,
                 "高上高普特考 www.get.com.tw/goldensun 台北市開封街一段 2 號 8 樓02-23318268【中壢】中壢市中山路 100 號 14 樓 03-4256899【台中】台中市東區復興路四段 231-3 號 1 樓‧04-22298699【台南】台南市中西區中山路 147 號 3 樓之 1‧06-2235868 【高雄】高雄市新興區中山一路 308 號 8 樓‧07-2358996【另有淡水‧三峽‧林口‧羅東‧中壢‧逢甲‧東海‧中技】",
                 "台北市開封街一段",
-                "2 號 7 樓電話", "02-23115586", "02-23115586", "http://www.license.com.tw/lawyer",
+                "2 號 7 樓電話", "02-23115586", "http://www.license.com.tw/lawyer",
                 "【版權所有，重製必究！】", "【版權所有，重製必究", '【法律專班】', '地方特考高分詳解', 
                 '高點', '高上公職', '--', '高上', '‧', '版權所有，重製必究！',
                 '   ', '  ', '考點命中', '《透明的刑法總則編 》', '高點文化出版', 
                 '02-23318268', "－", '司法三等全套詳解', '【法律專班】',
-                '【版權所有，重製必', '【參考書目】', '《保險法實例研習》', '', '', '', self.exam_year, "【高分閱讀】"
+                '【版權所有，重製必', '【參考書目】', '《保險法實例研習》', '', '', '', self.exam_year, "【高分閱讀】", '高普考高分詳解', '【參考資料】', '北市開封街一段 2 號 7 樓', '律師司法官班' 
                 ]
         for word in remove_word:
             text = text.replace(word, "")
