@@ -1,4 +1,5 @@
 
+
 from PyPDF2 import PdfReader
 import pdfplumber
 import os
@@ -10,11 +11,14 @@ numeric = [ x for x in range(1, 11) ]
 
 trans = {}
 
+choice = {"(1)":'(A)', '(2)':'(B)', '(3)':'(C)', '(4)':'(D)',
+          "":'(A)', '':'(B)', '':'(C)', '':'(D)'}
+
 for i in range(len(chinese)):
     trans[numeric[i]] = chinese[i]
 
 
-for pdf in [ x for x in os.listdir(".") if "pdf" in x ]:
+for pdf in [ x for x in os.listdir(".") if "txt" in x ]:
     if "(" in pdf or ")" in pdf:
         print("rename")
         os.system("mv \'{}\' \'{}\'".format(pdf, pdf.replace("(", "_").replace(")", "_")) )
@@ -30,16 +34,21 @@ class extract:
 
         for filename in filenames:
 
-            print("current file:", filename)
+            # print("current file:", filename)
             self.quetions = []
             self.answers = []
             self.all_text = ""
 
-            os.system("pdftotext '{}'".format(filename))
+            # os.system("pdftotext '{}'".format(filename))
             with open("{}.txt".format(filename[:-4]), "r") as f:
                 self.all_text = f.read()
 
-            os.system("rm '" + filename[:-4]+".txt'")
+            # os.system("rm '" + filename[:-4]+".txt'")
+            self.all_text = self.all_text.replace(",", "，")
+
+            for k, v in choice.items():
+                self.all_text = self.all_text.replace(k, v)
+
 
             # print(self.all_text)
             # pages = self.get_page(filename)
@@ -62,7 +71,7 @@ class extract:
             print("done")
 
     def get_pdf(self):
-        return [ x for x in os.listdir(".") if "pdf" in x ]
+        return [ x for x in os.listdir(".") if "txt" in x ]
 
     def get_page(self, filename):
         reader = PdfReader(filename)
@@ -74,125 +83,30 @@ class extract:
 
     def get_q(self, text):
 
-        # preprocessing: remove comma from text
-        text = text.replace(",", " ")
+        text = text.replace("（", "(").replace("）", ")")
 
-        text = text[text.find("一、")+2:]
-        # alternative:
-        # t = text.find("答：")
 
-        flag = 0
-        
-        if "【擬答】" in text:
-            count = 1
-            while 1:
-                n = text.find("【擬答】")
-                # print(n)
-                if n == -1:
-                    break
-                i = 0
-                # print(text)
-                for i in range(n, 0, -1): # find quetion end
-                    if text[i:i+2] == "分）" or text[i:i+2] == "分)":
-                        break
-                i -= 4 # remove (25分)
+        end = text.find("請回答") - 3
+        if end == -4:
+            end = text.find("請依下文") - 4
+            if end == -5 :
+                end = text.find("為題組") - 4
 
-                que = self.text_clean(text[:i].replace("\n", ""))
-                # print("current:", que)
-                self.quetions.append(que)
 
-                text = text[i:]
+        k = ["(A)","(B)", "(C)", "(D)"]
 
-                # print("finding")
-                ans_begin = text.find("【擬答】") + 4
-                if ans_begin == 1: # ans_begin == -1
-                    print("cannot find answer")
+        start = text.find(k[0])
 
-                text = text[ans_begin:]
-                
-                try:
-                    ans_end = text.find(trans[count+1]) - 1
-                    if ans_end == -2: # ans_end == -1
-                        ans_end = text.find(trans[count+1][0]  + "\n" + trans[count+1][1]) - 2 
-                        if ans_end == -3:
-                            ans_end = text.find("測驗題部分") - 3
-                            ans = self.text_clean(text[:ans_end].replace("\n", ""))
-                            self.answers.append(ans)
-                            text = text[ans_end+9:]
-                            flag = 1
-                            break
-                except:
-                    return
+        for ch in k:
+            if text.find(ch) < start:
+                start = text.find(ch)
 
-                ans = self.text_clean(text[:ans_end].replace("\n", ""))
-                # print("ans: " + ans)
-                self.answers.append(ans)
-                text = text[ans_end+3:]
-                
-                count += 1
-
-        else:
-            count = 1
-            while 1:
-                n = text.find("答：")
-                if n == -1:
-                    break
-                i = 0
-                for i in range(n, 0, -1): # find quetion end
-                    if text[i:i+2] == "分）":
-                        break
-                i -= 4 # remove (25分)
-
-                que = self.text_clean(text[:i].replace("\n", ""))
-                self.quetions.append(que)
-
-                text = text[i:]
-
-                ans_begin = text.find("答：") + 2
-
-                text = text[ans_begin:]
-                
-                try:
-                    ans_end = text.find(trans[count+1]) - 1
-                    if ans_end == -2: # ans_end == -1
-                        # print("find -1")
-                        ans_end = text.find(trans[count+1][0]  + "\n" + trans[count+1][1]) - 2 
-                        if ans_end == -3:
-                            ans_end = text.find("測驗題部分") - 3
-                            ans = self.text_clean(text[:ans_end].replace("\n", ""))
-                            self.answers.append(ans)
-                            text = text[ans_end+9:]
-                            flag = 1
-                            break
-
-                except:
-                    return
-
-                ans = self.text_clean(text[:ans_end].replace("\n", ""))
-                
-                # print("current:", que)
-                # print("ans: " + ans)
-                self.answers.append(ans)
-                text = text[ans_end+3:]
-                
-                count += 1
-
-        """
-        if flag:
-            print("in flag")
-            self.list_q(text)
-            print("list_q done")
-        """
-
-    def list_q(self, text):
-        
+        text = text[start:end]        
         print(text)
         count = 1
         while 1:
             a_start = text.find("(")
-            if a_start == -1:
-                a_start = text.find("（")
-            print(a_start)
+            # print(a_start)
             text = text[a_start:]
             answer = text[:3]
             self.answers.append(self.text_clean(answer.replace("\n", "")))
@@ -208,9 +122,33 @@ class extract:
                 if text[i] == '\n':
                     break
             question = text[:i]
+
+            # avoid English question
+            q_sp = question.split()
+            if len(q_sp) > 3:
+                if self.is_english_word(question.split()[0]) and self.is_english_word(question.split()[1]):
+                    print("delete")
+                    del self.answers[-1] # remove the last item of self.answers
+                    break
+
             self.quetions.append(self.text_clean(question.replace("\n", "")))
             text = text[i+1:]
             count += 1
+
+    def is_english_word(self, text):
+        flag = 1
+
+        for c in text:
+            try:
+                if (ord(c) >= 65 and ord(c) <= 90) or ( ord(c) >= 97 and ord(c) <= 122 ):
+                    pass
+                else:
+                    flag = 0
+                    break
+            except:
+                return 0
+
+        return flag
 
 
     def q2csv(self, quetions, answers, filename):
@@ -237,9 +175,9 @@ class extract:
                 target,
                 "台北市開封街一段",
                 "2 號 7 樓電話", "02-23115586", "http://www.license.com.tw/lawyer",
-                "【版權所有，重製必究！】", "【版權所有，重製必究", '【法律專班】', '地方特考高分詳解', 
+                "【版權所有，重製必究！】", "【版權所有，重製必究", '【法律專班】', '地方#特考高分詳解', 
                 '高點', '高上公職', '--', '高上', '‧', '版權所有，重製必究！',
-                '   ', '  ', '考點命中', '《透明的刑法總則編 》', '高點文化出版', 
+                '考點命中', '《透明的刑法總則編 》', '高點文化出版', 
                 '02-23318268', '司法三等全套詳解', '【法律專班】',
                 '【版權所有，重製必', '【參考書目】', '《保險法實例研習》', '', '', '', self.exam_year, "【高分閱讀】", '高普考高分詳解', '【參考資料】', '北市開封街一段 2 號 7 樓', '律師司法官班', '全套詳解'
                 ]
@@ -265,12 +203,10 @@ for csv in csv_file:
         c = f.read().count(",")
         print(c, end=",  ")
 
-        if c < 2:
+        if c < 10:
             print("=== warning ===")
-            """
-            os.system("mv '{}' problem".format(csv[:-4] + ".pdf"))
-            os.system("rm '{}'".format(csv))
-            """
+            os.system("mv '{}' problem".format(csv[:-4] + ".txt"))
+            # os.system("rm '{}'".format(csv))
         else:
             print()
 
