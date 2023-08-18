@@ -13,6 +13,12 @@
 ```linebreaker.py``` : 建立一個GUI幫助刪除不必要的換行(手動)
 
 
+# 執行畫面
+
+1. 處裡申論題(12個PDF)
+![video.gif loading...]()
+
+
 # 如何讀取PDF內容
 
 1. 純Python:
